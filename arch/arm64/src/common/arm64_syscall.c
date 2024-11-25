@@ -154,13 +154,18 @@ uintptr_t dispatch_syscall(unsigned int nbr, uintptr_t parm1,
 
 uint64_t *arm64_syscall(uint64_t *regs)
 {
-  uint64_t            *ret_regs = regs;
-  uint64_t             cmd;
-  struct tcb_s        *tcb;
-  int cpu;
+  int cpu = this_cpu();
+  struct tcb_s **running_task = &g_running_tasks[cpu];
+  struct tcb_s *tcb = this_task();
+  uint64_t cmd;
 #ifdef CONFIG_BUILD_KERNEL
   uint64_t             spsr;
 #endif
+
+  if (*running_task != NULL)
+    {
+      (*running_task)->xcp.regs = regs;
+    }
 
   /* Nested interrupts are not supported */
 
@@ -182,32 +187,21 @@ uint64_t *arm64_syscall(uint64_t *regs)
        * At this point, the following values are saved in context:
        *
        *   x0 = SYS_restore_context
-       *   x1 = restoreregs( xcp->regs, callee saved register save area)
+       *   x1 = next
        */
 
       case SYS_restore_context:
-        {
-          /* Replace 'regs' with the pointer to the register set in
-           * regs[REG_R1].  On return from the system call, that register
-           * set will determine the restored context.
-           */
-
-          ret_regs = (uint64_t *)regs[REG_X1];
-          regs[REG_X1] = 0; /* set the saveregs = 0 */
-
-          DEBUGASSERT(ret_regs);
-        }
         break;
 
       /* x0 = SYS_switch_context:  This a switch context command:
        *
-       * void arm64_switchcontext(uint64_t *saveregs, uint64_t *restoreregs);
+       * void arm64_switchcontext(struct tcb_s *prev, struct tcb_s *next);
        *
        * At this point, the following values are saved in context:
        *
        *   x0 = SYS_switch_context
-       *   x1 = saveregs (xcp->regs, callee saved register save area)
-       *   x2 = restoreregs (xcp->regs, callee saved register save area)
+       *   x1 = prev
+       *   x2 = next
        *
        * In this case, we do both: We save the context registers to the save
        * register area reference by the saved contents of x1 and then set
@@ -216,12 +210,6 @@ uint64_t *arm64_syscall(uint64_t *regs)
        */
 
       case SYS_switch_context:
-        {
-          DEBUGASSERT(regs[REG_X1] != 0 && regs[REG_X2] != 0);
-          *(uint64_t **)regs[REG_X1] = regs;
-
-          ret_regs = (uint64_t *)regs[REG_X2];
-        }
         break;
 
 #ifdef CONFIG_BUILD_KERNEL
@@ -328,15 +316,13 @@ uint64_t *arm64_syscall(uint64_t *regs)
       default:
         {
           svcerr("ERROR: Bad SYS call: 0x%" PRIx64 "\n", cmd);
-          ret_regs = 0;
           return 0;
         }
         break;
     }
 
-  if ((uint64_t *)regs != ret_regs)
+  if (*running_task != tcb)
     {
-      cpu = this_cpu();
       tcb = current_task(cpu);
 
 #ifdef CONFIG_ARCH_ADDRENV
@@ -351,19 +337,19 @@ uint64_t *arm64_syscall(uint64_t *regs)
 
       /* Update scheduler parameters */
 
-      nxsched_suspend_scheduler(g_running_tasks[cpu]);
+      nxsched_suspend_scheduler(*running_task);
       nxsched_resume_scheduler(tcb);
 
       /* Record the new "running" task.  g_running_tasks[] is only used by
        * assertion logic for reporting crashes.
        */
 
-      g_running_tasks[cpu] = tcb;
+      *running_task = tcb;
 
       /* Restore the cpu lock */
 
       restore_critical_section(tcb, cpu);
     }
 
-  return ret_regs;
+  return tcb->xcp.regs;
 }

@@ -386,6 +386,13 @@ ifeq ($(CONFIG_ARCH_TOOLCHAIN_GNU),y)
     ifeq ($(GCCVER),)
       export GCCVER := $(shell $(CC) --version | grep gcc | sed -E "s/.* ([0-9]+\.[0-9]+).*/\1/" | cut -d'.' -f1)
     endif
+    ifeq ($(shell expr "$(GCCVER)" \>= 12), 1)
+      ifeq ($(CONFIG_ARCH_RAMFUNCS),y)
+        LDFLAGS += --no-warn-rwx-segments
+      else ifeq ($(CONFIG_BOOT_RUNFROMFLASH),)
+        LDFLAGS += --no-warn-rwx-segments
+      endif
+    endif
   endif
 endif
 
@@ -410,7 +417,7 @@ ifeq ($(CONFIG_LIBSUPCXX_TOOLCHAIN),y)
   EXTRA_LIBS += $(wildcard $(shell $(CC) $(ARCHCPUFLAGS) --print-file-name=libsupc++.a))
 endif
 
-ifeq ($(CONFIG_SCHED_GCOV),y)
+ifeq ($(CONFIG_COVERAGE_TOOLCHAIN),y)
   EXTRA_LIBS += $(wildcard $(shell $(CC) $(ARCHCPUFLAGS) --print-file-name=libgcov.a))
 endif
 

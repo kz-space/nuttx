@@ -21,13 +21,14 @@
 #
 ############################################################################
 
-# Darwin
+# NuttX CI Job for macOS, runs on Apple Intel Mac
 
 # Prerequisites for macOS
 #  - Xcode (cc, etc)
 #  - homebrew
-#  - autoconf
+#  - curl
 #  - wget
+#  - cmake
 
 set -e
 set -o xtrace
@@ -80,12 +81,20 @@ avr_gcc_toolchain() {
   command avr-gcc --version
 }
 
+autoconf_brew() {
+  if ! type autoconf > /dev/null 2>&1; then
+    brew install autoconf
+  fi
+
+  command autoconf --version
+}
+
 binutils() {
-  mkdir -p "${NUTTXTOOLS}"/bintools/bin
   add_path "${NUTTXTOOLS}"/bintools/bin
 
   if ! type objcopy > /dev/null 2>&1; then
     brew install binutils
+    mkdir -p "${NUTTXTOOLS}"/bintools/bin
     # It is possible we cached prebuilt but did brew install so recreate
     # symlink if it exists
     rm -f "${NUTTXTOOLS}"/bintools/bin/objcopy
@@ -105,7 +114,7 @@ bloaty() {
     # https://github.com/google/bloaty/pull/326
     git checkout 52948c107c8f81045e7f9223ec02706b19cfa882
     mkdir -p "${NUTTXTOOLS}"/bloaty
-    cmake -B build/bloaty -D BLOATY_PREFER_SYSTEM_CAPSTONE=NO -D CMAKE_INSTALL_PREFIX="${NUTTXTOOLS}"/bloaty
+    cmake -B build/bloaty -GNinja -D BLOATY_PREFER_SYSTEM_CAPSTONE=NO -D CMAKE_INSTALL_PREFIX="${NUTTXTOOLS}"/bloaty
     cmake --build build/bloaty
     cmake --build build/bloaty --target install
     cd "${NUTTXTOOLS}"
@@ -205,7 +214,11 @@ python_tools() {
   echo "export PIP_USER=yes" >> "${NUTTXTOOLS}"/env.sh
   echo "export PYTHONUSERBASE=${NUTTXTOOLS}/pylocal" >> "${NUTTXTOOLS}"/env.sh
   add_path "${PYTHONUSERBASE}"/bin
-
+  
+  if [ "X$osarch" == "Xarm64" ]; then
+    python3 -m venv --system-site-packages /opt/homebrew
+  fi
+  
   # workaround for Cython issue
   # https://github.com/yaml/pyyaml/pull/702#issuecomment-1638930830
   pip3 install "Cython<3.0"
@@ -361,7 +374,7 @@ install_build_tools() {
   mkdir -p "${NUTTXTOOLS}"
   echo "#!/usr/bin/env sh" > "${NUTTXTOOLS}"/env.sh
 
-  install="arm_gcc_toolchain arm64_gcc_toolchain avr_gcc_toolchain binutils bloaty elf_toolchain gen_romfs gperf kconfig_frontends mips_gcc_toolchain ninja_brew python_tools riscv_gcc_toolchain rust dlang zig xtensa_esp32_gcc_toolchain u_boot_tools util_linux wasi_sdk c_cache"
+  install="ninja_brew autoconf_brew arm_gcc_toolchain arm64_gcc_toolchain avr_gcc_toolchain binutils bloaty elf_toolchain gen_romfs gperf kconfig_frontends mips_gcc_toolchain python_tools riscv_gcc_toolchain rust dlang zig xtensa_esp32_gcc_toolchain u_boot_tools util_linux wasi_sdk c_cache"
 
   mkdir -p "${NUTTXTOOLS}"/homebrew
   export HOMEBREW_CACHE=${NUTTXTOOLS}/homebrew

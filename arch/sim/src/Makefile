@@ -140,12 +140,8 @@ ifeq ($(CONFIG_LIBM_TOOLCHAIN),y)
   STDLIBS += -lm
 endif
 
-ifeq ($(CONFIG_SCHED_GCOV),y)
+ifeq ($(CONFIG_COVERAGE_TOOLCHAIN),y)
   STDLIBS += -lgcov
-endif
-
-ifeq ($(CONFIG_SIM_GPROF),y)
-  HOSTCFLAGS += -pg
 endif
 
 ifeq ($(CONFIG_STACK_COLORATION),y)

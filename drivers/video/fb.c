@@ -1,6 +1,8 @@
 /****************************************************************************
  * drivers/video/fb.c
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -985,7 +987,11 @@ static int fb_ioctl(FAR struct file *filep, int cmd, unsigned long arg)
 
           if (fb->vtable->pandisplay != NULL)
             {
-              fb->vtable->pandisplay(fb->vtable, pinfo);
+              ret = fb->vtable->pandisplay(fb->vtable, pinfo);
+              if (ret < 0)
+                {
+                  break;
+                }
             }
 
           ret = fb_add_paninfo(fb, &paninfo, FB_NO_OVERLAY);

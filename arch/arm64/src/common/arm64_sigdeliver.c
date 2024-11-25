@@ -160,5 +160,7 @@ retry:
   leave_critical_section(flags);
   rtcb->irqcount--;
 #endif
-  arm64_fullcontextrestore(rtcb->xcp.regs);
+
+  g_running_tasks[this_cpu()] = NULL;
+  arm64_fullcontextrestore();
 }

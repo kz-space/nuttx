@@ -1,6 +1,8 @@
 /****************************************************************************
  * drivers/sensors/fakesensor_uorb.c
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -390,6 +392,7 @@ static int fakesensor_thread(int argc, char** argv)
  *                    ...
  *   devno       - The user specifies which device of this type, from 0.
  *   batch_number- The maximum number of batch
+ *
  ****************************************************************************/
 
 int fakesensor_init(int type, FAR const char *file_name,
