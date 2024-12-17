@@ -130,6 +130,10 @@
 #  include "espressif/esp_temperature_sensor.h"
 #endif
 
+#ifdef CONFIG_SYSTEM_NXDIAG_ESPRESSIF_CHIP_WO_TOOL
+#  include "espressif/esp_nxdiag.h"
+#endif
+
 #include "esp32s3-devkit.h"
 
 /****************************************************************************
@@ -243,7 +247,7 @@ int esp32s3_bringup(void)
 
 #ifdef CONFIG_ESP32S3_SPIFLASH
   ret = board_spiflash_init();
-  if (ret)
+  if (ret < 0)
     {
       syslog(LOG_ERR, "ERROR: Failed to initialize SPI Flash\n");
     }
@@ -534,6 +538,14 @@ int esp32s3_bringup(void)
   if (ret < 0)
     {
       syslog(LOG_ERR, "ERROR: board_motor_initialize failed: %d\n", ret);
+    }
+#endif
+
+#ifdef CONFIG_SYSTEM_NXDIAG_ESPRESSIF_CHIP_WO_TOOL
+  ret = esp_nxdiag_initialize();
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: esp_nxdiag_initialize failed: %d\n", ret);
     }
 #endif
 

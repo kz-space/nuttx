@@ -1,6 +1,8 @@
 /****************************************************************************
  * arch/arm/src/stm32h5/hardware/stm32_sbs.h
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -41,7 +43,7 @@
 
 /* Register Offsets *********************************************************/
 
-#define STM32_SBS_HDPLCR_OFFSET       0x0010  
+#define STM32_SBS_HDPLCR_OFFSET       0x0010
 #define STM32_SBS_HPDLSR_OFFSET       0x0014
 #define STM32_SBS_NEXTHDPLCR_OFFSET   0x0018
 #define STM32_SBS_DBGCR_OFFSET        0x0020

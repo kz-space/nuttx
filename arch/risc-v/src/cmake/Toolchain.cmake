@@ -1,6 +1,8 @@
 # ##############################################################################
 # arch/risc-v/src/cmake/Toolchain.cmake
 #
+# SPDX-License-Identifier: Apache-2.0
+#
 # Licensed to the Apache Software Foundation (ASF) under one or more contributor
 # license agreements.  See the NOTICE file distributed with this work for
 # additional information regarding copyright ownership.  The ASF licenses this
@@ -109,6 +111,14 @@ elseif(CONFIG_LTO_FULL)
 endif()
 
 set(NO_LTO "-fno-lto")
+
+# override the responsible file flag
+
+if(CMAKE_GENERATOR MATCHES "Ninja")
+  set(CMAKE_C_RESPONSE_FILE_FLAG "$DEFINES $INCLUDES $FLAGS @")
+  set(CMAKE_CXX_RESPONSE_FILE_FLAG "$DEFINES $INCLUDES $FLAGS @")
+  set(CMAKE_ASM_RESPONSE_FILE_FLAG "$DEFINES $INCLUDES $FLAGS @")
+endif()
 
 # override the ARCHIVE command
 set(CMAKE_ARCHIVE_COMMAND "<CMAKE_AR> rcs <TARGET> <LINK_FLAGS> <OBJECTS>")

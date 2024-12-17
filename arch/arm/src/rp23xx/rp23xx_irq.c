@@ -1,6 +1,8 @@
 /****************************************************************************
  * arch/arm/src/rp23xx/rp23xx_irq.c
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -305,7 +307,7 @@ void up_disable_irq(int irq)
 
 #ifdef CONFIG_SMP
   if (irq >= RP23XX_IRQ_EXTINT && irq != RP23XX_SIO_IRQ_FIFO &&
-      up_cpu_index() != 0)
+      this_cpu() != 0)
     {
       /* Must be handled by Core 0 */
 
@@ -361,7 +363,7 @@ void up_enable_irq(int irq)
 
 #ifdef CONFIG_SMP
   if (irq >= RP23XX_IRQ_EXTINT && irq != RP23XX_SIO_IRQ_FIFO &&
-      up_cpu_index() != 0)
+      this_cpu() != 0)
     {
       /* Must be handled by Core 0 */
 

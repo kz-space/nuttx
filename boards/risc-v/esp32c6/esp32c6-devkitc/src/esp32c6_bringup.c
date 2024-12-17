@@ -65,6 +65,10 @@
 #  include <nuttx/input/buttons.h>
 #endif
 
+#ifdef CONFIG_ESPRESSIF_EFUSE
+#  include "espressif/esp_efuse.h"
+#endif
+
 #ifdef CONFIG_ESP_RMT
 #  include "esp_board_rmt.h"
 #endif
@@ -100,6 +104,10 @@
 
 #ifdef CONFIG_ESP_PCNT_AS_QE
 #  include "esp_board_qencoder.h"
+#endif
+
+#ifdef CONFIG_SYSTEM_NXDIAG_ESPRESSIF_CHIP_WO_TOOL
+#  include "espressif/esp_nxdiag.h"
 #endif
 
 #include "esp32c6-devkitc.h"
@@ -154,6 +162,14 @@ int esp_bringup(void)
   if (ret < 0)
     {
       _err("Failed to mount tmpfs at %s: %d\n", CONFIG_LIBC_TMPDIR, ret);
+    }
+#endif
+
+#if defined(CONFIG_ESPRESSIF_EFUSE)
+  ret = esp_efuse_initialize("/dev/efuse");
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: Failed to init EFUSE: %d\n", ret);
     }
 #endif
 
@@ -382,6 +398,14 @@ int esp_bringup(void)
   if (ret < 0)
     {
       syslog(LOG_ERR, "ERROR: board_qencoder_initialize failed: %d\n", ret);
+    }
+#endif
+
+#ifdef CONFIG_SYSTEM_NXDIAG_ESPRESSIF_CHIP_WO_TOOL
+  ret = esp_nxdiag_initialize();
+  if (ret < 0)
+    {
+      syslog(LOG_ERR, "ERROR: esp_nxdiag_initialize failed: %d\n", ret);
     }
 #endif
 

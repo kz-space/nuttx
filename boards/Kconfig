@@ -423,7 +423,7 @@ config ARCH_BOARD_FRANZININHO_WIFI
 
 config ARCH_BOARD_ESP32S3_DEVKIT
 	bool "Espressif ESP32-S3 DevKit"
-	depends on ARCH_CHIP_ESP32S3WROOM1N4 || ARCH_CHIP_ESP32S3MINI1N8 || ARCH_CHIP_ESP32S3WROOM2N16R8V || ARCH_CHIP_ESP32S3WROOM2N32R8V || ARCH_CHIP_ESP32S3CUSTOM
+	depends on ARCH_CHIP_ESP32S3WROOM1N4 || ARCH_CHIP_ESP32S3MINI1N8 || ARCH_CHIP_ESP32S3WROOM2N16R8V || ARCH_CHIP_ESP32S3WROOM2N32R8V || ARCH_CHIP_ESP32S3CUSTOM || ARCH_CHIP_ESP32S3WROOM1N8R8
 	select ARCH_HAVE_LEDS
 	select ARCH_HAVE_BUTTONS
 	select ARCH_HAVE_IRQBUTTONS if ESP32S3_GPIO_IRQ
@@ -779,6 +779,16 @@ config ARCH_BOARD_IMXRT1170_EVK
 	---help---
 		This is the board configuration for the port of NuttX to the NXP i.MXRT
 		evaluation kit, MIMXRT1170-EVK.  This board features the MIMXRT1176DVMAA MCU.
+
+config ARCH_BOARD_IMX95_EVK
+	bool "NXP i.MX 95 EVK"
+	depends on ARCH_CHIP_IMX9_CORTEX_M
+	select ARCH_HAVE_LEDS
+	select ARCH_HAVE_BUTTONS
+	select ARCH_HAVE_IRQBUTTONS
+	---help---
+		This is the board configuration for the port of NuttX to the NXP i.MXRT
+		evaluation kit, IMX95-EVK.  This board features the IMX95 MCU.
 
 config ARCH_BOARD_LC823450_XGEVK
 	bool "ON Semiconductor LC823450-XGEVK development board"
@@ -3345,6 +3355,7 @@ config ARCH_BOARD
 	default "imxrt1060-evk"             if ARCH_BOARD_IMXRT1060_EVK
 	default "imxrt1064-evk"             if ARCH_BOARD_IMXRT1064_EVK
 	default "imxrt1170-evk"             if ARCH_BOARD_IMXRT1170_EVK
+	default "imx95-evk"                 if ARCH_BOARD_IMX95_EVK
 	default "kwikstik-k40"              if ARCH_BOARD_KWIKSTIK_K40
 	default "launchxl-cc1310"           if ARCH_BOARD_LAUNCHXL_CC1310
 	default "launchxl-cc1312r1"         if ARCH_BOARD_LAUNCHXL_CC1312R1
@@ -3756,6 +3767,9 @@ source "boards/arm/imxrt/imxrt1064-evk/Kconfig"
 endif
 if ARCH_BOARD_IMXRT1170_EVK
 source "boards/arm/imxrt/imxrt1170-evk/Kconfig"
+endif
+if ARCH_BOARD_IMX95_EVK
+source "boards/arm/imx9/imx95-evk/Kconfig"
 endif
 if ARCH_BOARD_TEENSY_4X
 source "boards/arm/imxrt/teensy-4.x/Kconfig"
@@ -4693,9 +4707,9 @@ source "boards/arm/nrf91/common/Kconfig"
 endif
 endif
 
-config BOARD_CRASHDUMP
-	bool "Enable Board level logging of crash dumps"
-	default n
+choice
+	prompt "BOARD crashdump method"
+	default BOARD_CRASHDUMP_NONE
 	---help---
 		If selected up_assert will call out to board_crashdump, in the case
 		of an assertion failure, prior to calling exit. Or in the
@@ -4712,28 +4726,43 @@ config BOARD_CRASHDUMP
 
 config BOARD_COREDUMP_SYSLOG
 	bool "Enable Core dump to syslog"
-	default n
 	depends on COREDUMP
 	---help---
 		Enable put coredump to syslog when crash.
 
 config BOARD_COREDUMP_BLKDEV
 	bool "Enable Core Dump to block device"
-	default n
 	depends on COREDUMP
 	---help---
-		Enable save coredump at block device when crash.
+		Enable save coredump to block device when crash.
 
-config BOARD_COREDUMP_BLKDEV_PATH
-	string "Save Core Dump block device PATH"
-	depends on BOARD_COREDUMP_BLKDEV
+config BOARD_COREDUMP_MTDDEV
+	bool "Enable Core Dump to mtd device"
+	depends on COREDUMP
 	---help---
-		Save coredump file block device path.
+		Enable save coredump to mtd device when crash.
+
+config BOARD_CRASHDUMP_CUSTOM
+	bool "Enable Core Dump with custom method"
+	---help---
+		Enable save coredump with custom method. only work with
+		board_crashdump api.
+
+config BOARD_CRASHDUMP_NONE
+	bool "No Board level crash dump"
+
+endchoice # BOARD crashdump method
+
+config BOARD_COREDUMP_DEVPATH
+	string "Save Core Dump data with device PATH"
+	depends on BOARD_COREDUMP_BLKDEV || BOARD_COREDUMP_MTDDEV
+	---help---
+		Save coredump file into block/mtd device path.
 
 config BOARD_COREDUMP_FULL
 	bool "Core Dump all thread registers and stacks"
 	default y
-	depends on BOARD_COREDUMP_SYSLOG || BOARD_COREDUMP_BLKDEV
+	depends on !BOARD_CRASHDUMP_NONE
 	---help---
 		Enable to support for the dump all task registers and stacks.
 
@@ -4741,7 +4770,7 @@ config BOARD_COREDUMP_COMPRESSION
 	bool "Enable Core Dump compression"
 	default y
 	select LIBC_LZF
-	depends on BOARD_COREDUMP_SYSLOG || BOARD_COREDUMP_BLKDEV
+	depends on !BOARD_CRASHDUMP_NONE
 	---help---
 		Enable LZF compression algorithm for core dump content
 

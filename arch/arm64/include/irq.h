@@ -1,6 +1,8 @@
 /****************************************************************************
  * arch/arm64/include/irq.h
  *
+ * SPDX-License-Identifier: Apache-2.0
+ *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.  The
@@ -270,7 +272,7 @@ struct xcptcontext
 
   /* task context, for signal process */
 
-  uint64_t *saved_reg;
+  uint64_t *saved_regs;
 
 #ifdef CONFIG_ARCH_FPU
   uint64_t *fpu_regs;
